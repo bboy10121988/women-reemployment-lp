@@ -101,7 +101,7 @@ h3 { font-size: 1.1rem; font-weight: 700; line-height: 1.6; margin: 0 0 8px; }
   font-size: clamp(1.02rem, .96rem + .4vw, 1.2rem);
   color: var(--ink-soft);
   margin: 0 0 32px;
-  max-width: 24em;
+  max-width: 30em;
   text-wrap: pretty;
 }
 
