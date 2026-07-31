@@ -19,7 +19,7 @@
 
 const CONFIG = {
   ENDPOINT: 'https://script.google.com/macros/s/AKfycbxBxHWznIrvXBnC1VlpmR65OETp-6opxiJ9U_DiMBtlXgxQAjx4R9zsT7Islk531JHVVA/exec',
-  LINE_URL: '',
+  LINE_URL: 'https://lin.ee/r2MpssO',
   PIXEL_ID: '1352716843070697',
   GA4_ID: ''
 };
@@ -91,6 +91,18 @@ function adSource() {
   }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
 
   items.forEach((el) => io.observe(el));
+})();
+
+/* ---------- LINE 備援入口（連結只寫在 CONFIG，避免兩處不同步） ---------- */
+
+(function initLineAlt() {
+  const box = document.getElementById('lineAlt');
+  const btn = document.getElementById('lineAltBtn');
+  if (!box || !btn || !CONFIG.LINE_URL) return;
+
+  btn.href = CONFIG.LINE_URL;
+  box.hidden = false;
+  btn.addEventListener('click', () => trackEvent('Contact', { channel: 'line' }));
 })();
 
 /* ---------- 資格自我檢核 ---------- */

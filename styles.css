@@ -490,6 +490,26 @@ h3 { font-size: 1.1rem; font-weight: 700; line-height: 1.6; margin: 0 0 8px; }
   .form-status.is-success { color: var(--accent); }
 }
 
+/* ---------- 表單旁的 LINE 備援入口 ---------- */
+
+/* 刻意採上下堆疊，各寬度行為一致，不依賴 flex 換行的偶然結果 */
+.line-alt {
+  margin-top: 20px;
+  padding: 24px 26px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+}
+.line-alt-title { margin: 0 0 4px; font-weight: 700; }
+.line-alt-desc { margin: 0; font-size: .92rem; color: var(--ink-soft); max-width: 40em; }
+
+@media (max-width: 620px) {
+  .line-alt { justify-items: stretch; }
+  .line-alt .btn { width: 100%; }
+}
+
 /* ---------- Footer ---------- */
 
 .footer {
