@@ -9,12 +9,67 @@
 
    LINE_URL  官方 LINE 帳號的加入好友連結。填了之後，報名成功畫面與備援訊息
              都會出現加 LINE 的按鈕。
+
+   PIXEL_ID  Meta 像素編號。填了才會載入像素並回報事件，留空則完全不載入。
+   GA4_ID    GA4 評估 ID，格式 G-XXXXXXXXXX。留空則不載入。
+
+   追蹤事件：進站 PageView、四題資格檢核全勾 CheckComplete、報名送出成功 Lead。
+   廣告網址請帶 utm 參數（utm_content 用素材名稱），表單會一併記錄來源。
    ========================================================================== */
 
 const CONFIG = {
-  ENDPOINT: '',
-  LINE_URL: ''
+  ENDPOINT: 'https://script.google.com/macros/s/AKfycbxBxHWznIrvXBnC1VlpmR65OETp-6opxiJ9U_DiMBtlXgxQAjx4R9zsT7Islk531JHVVA/exec',
+  LINE_URL: '',
+  PIXEL_ID: '',
+  GA4_ID: ''
 };
+
+/* ---------- 追蹤碼載入（ID 沒填就完全不載入，不留空殼請求） ---------- */
+
+(function initTracking() {
+  if (CONFIG.PIXEL_ID) {
+    /* eslint-disable */
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+    (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    /* eslint-enable */
+    fbq('init', CONFIG.PIXEL_ID);
+    fbq('track', 'PageView');
+  }
+
+  if (CONFIG.GA4_ID) {
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + CONFIG.GA4_ID;
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', CONFIG.GA4_ID);
+  }
+})();
+
+/* 事件回報。像素或 GA4 沒設定時靜默跳過，不報錯。 */
+function trackEvent(name, params) {
+  if (CONFIG.PIXEL_ID && window.fbq) {
+    const standard = ['Lead', 'CompleteRegistration', 'Contact', 'ViewContent'];
+    fbq(standard.indexOf(name) >= 0 ? 'track' : 'trackCustom', name, params || {});
+  }
+  if (CONFIG.GA4_ID && window.gtag) {
+    gtag('event', name, params || {});
+  }
+}
+
+/* 記下廣告來源，隨報名資料一起送出，之後才分得出是哪一支素材帶來的 */
+function adSource() {
+  const p = new URLSearchParams(location.search);
+  const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid'];
+  const out = {};
+  keys.forEach((k) => { if (p.get(k)) out[k] = p.get(k); });
+  return out;
+}
 
 /* ---------- 進場動畫（MOTION_INTENSITY 3，尊重減少動態偏好） ---------- */
 
@@ -48,6 +103,7 @@ const CONFIG = {
   if (!form || !box || !text || !cta) return;
 
   const boxes = Array.from(form.querySelectorAll('input[type="checkbox"]'));
+  let passReported = false;
 
   function render() {
     const checked = boxes.filter((b) => b.checked).length;
@@ -65,6 +121,10 @@ const CONFIG = {
       box.classList.add('is-pass');
       text.textContent = '四項都符合，妳很可能可以申請。歡迎報名說明會，現場會協助妳填寫申請書。';
       cta.hidden = false;
+      if (!passReported) {
+        passReported = true;
+        trackEvent('CheckComplete', { checked: total });
+      }
       return;
     }
 
@@ -151,19 +211,27 @@ const CONFIG = {
     const data = Object.fromEntries(new FormData(form).entries());
     data.submittedAt = new Date().toISOString();
     data.source = location.href;
+    Object.assign(data, adSource());
 
     btn.disabled = true;
     btn.textContent = '送出中';
     setStatus('success', '正在送出，請稍候。');
 
     try {
-      await fetch(CONFIG.ENDPOINT, {
+      // 必須讀到後端回傳的 ok 才算成功。
+      // 不可用 no-cors：那會讓 403 之類的失敗看起來像成功，報名資料靜靜消失。
+      const res = await fetch(CONFIG.ENDPOINT, {
         method: 'POST',
-        mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(data)
       });
 
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+
+      const result = await res.json();
+      if (!result || result.ok !== true) throw new Error(result && result.error ? result.error : 'rejected');
+
+      trackEvent('Lead', { session: data.session, insured_status: data.status });
       form.querySelectorAll('input, select, textarea').forEach((el) => { el.value = ''; });
       setStatus('success',
         '報名成功。我們會在一到兩個工作天內與妳聯繫確認場次。' + lineButton());
