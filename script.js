@@ -21,7 +21,7 @@ const CONFIG = {
   ENDPOINT: 'https://script.google.com/macros/s/AKfycbxBxHWznIrvXBnC1VlpmR65OETp-6opxiJ9U_DiMBtlXgxQAjx4R9zsT7Islk531JHVVA/exec',
   LINE_URL: 'https://lin.ee/r2MpssO',
   PIXEL_ID: '1352716843070697',
-  GA4_ID: ''
+  GA4_ID: 'G-B9N6L0NQXK'
 };
 
 /* ---------- 追蹤碼載入（ID 沒填就完全不載入，不留空殼請求） ---------- */
