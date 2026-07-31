@@ -20,7 +20,7 @@
 const CONFIG = {
   ENDPOINT: 'https://script.google.com/macros/s/AKfycbxBxHWznIrvXBnC1VlpmR65OETp-6opxiJ9U_DiMBtlXgxQAjx4R9zsT7Islk531JHVVA/exec',
   LINE_URL: '',
-  PIXEL_ID: '',
+  PIXEL_ID: '1352716843070697',
   GA4_ID: ''
 };
 
